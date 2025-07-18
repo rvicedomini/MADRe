@@ -78,7 +78,7 @@ def main():
         assembly_out_dir = os.path.join(args.out_folder, "metaMDBG")
         try:
             logging.info("Running metaMDBG...")
-            command = f"{PATH_METAMDBG} asm {assembly_out_dir} {args.reads} -t {args.threads} 2> {args.out_folder}/metaMDBG.log && gunzip {assembly_out_dir}/contigs.fasta.gz && mv {assembly_out_dir}/contigs.fasta {assembly_out_dir}/assembly.fasta"
+            command = f"{PATH_METAMDBG} asm --out-dir {assembly_out_dir} --in-hifi {args.reads} --threads {args.threads} 2> {args.out_folder}/metaMDBG.log && gunzip {assembly_out_dir}/contigs.fasta.gz && mv {assembly_out_dir}/contigs.fasta {assembly_out_dir}/assembly.fasta"
             run_or_skip(command, f"{assembly_out_dir}/assembly.fasta", args.force)
         except Exception as e:
             logging.error(f"metaMDBG error: {e}")
