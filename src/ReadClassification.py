@@ -2,6 +2,7 @@ import argparse
 import logging
 import json
 from pathlib import Path
+import random
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import pairwise_distances
@@ -68,34 +69,80 @@ def species_split(U, NU, species_class, genomes, SS_info_json):
     
 
 
-def species_identification(U, NU, genomes, SS_info_json):
+def species_identification(U, NU, genomes, species_count, SS_info_json):
     SS_info = load_dict_from_json(SS_info_json)
 
-    c_problematic = []
     species_class = {}
-
     all_mappings = {**U, **NU}
+    rand = 0
 
     for read_id, values in all_mappings.items():
 
         taxids_genomes = []
         for g in values[0]:
             taxids_genomes.append(genomes[g])
+        taxids_values = []
+        for v in values[2]:
+            taxids_values.append(v)
         species_taxids = []
-        for t in taxids_genomes:
-            t_a = t.split('|')[1]
-            species_taxids.append(SS_info[t_a])
+        strain_species_count = {}
+        a_t = {}
+        for i,t in enumerate(taxids_genomes):
+            t_t = t.split('|')[1]
+            t_a = t.split('|')[2]
+            a_t[t_a] = t_t
+            v = taxids_values[i]
+            if SS_info[t_t] in strain_species_count:
+                strain_species_count[SS_info[t_t]].append((t_a,v))
+            else:
+                strain_species_count[SS_info[t_t]] = [(t_a,v)]
+        most_common_strains_vals = {}
 
-        if len(set(species_taxids)) > 1:
-            c_problematic.append(read_id)
-            species_class[read_id] = max(set(species_taxids), key=species_taxids.count)
+        for s, strains in strain_species_count.items():
+            max_val = max(v for _, v in strains)
+            temp = [a for a, v in strains if v == max_val]
+            most_common_strains_vals[random.choices(temp, k=1)[0]] = max_val
+
+        max_val = max(most_common_strains_vals.values())
+        candidates = [k for k, v in most_common_strains_vals.items() if v == max_val]
+        if len(candidates) > 1:
+            chosen = random.choices(candidates, k=1)[0]
+
         else:
-            #species_class[read_id] = int(list(set(species_taxids))[0])
-            species_class[read_id] = list(set(species_taxids))[0]
+            chosen = candidates[0]
 
-    # if len(c_problematic):
-    #     logging.info(f'Not classified on species level: {len(c_problematic)}')
+        species_class[read_id] = SS_info[a_t[chosen]]
 
+        # for t in taxids_genomes:
+        #     t_t = t.split('|')[1]
+        #     t_a = t.split('|')[2]
+        #     if t_a in list(most_common_strains_vals.keys()):
+        #         species_taxids.append(SS_info[t_t])
+        # if len(species_taxids) > 2:
+        #     print(species_taxids)
+        ## NORMALIZATION APPROACH
+        # if len(set(species_taxids)) > 1:
+        #     c_problematic.append(read_id)
+        #     #species_class[read_id] = max(set(species_taxids), key=species_taxids.count)
+        #     norm_scores = {}
+        #     for s in set(species_taxids):
+        #         raw_count = species_taxids.count(s)  
+        #         db_count = species_count[s]
+        #         norm_scores[s] = raw_count / (db_count ** alpha)
+        #     species_class[read_id] = max(norm_scores, key=norm_scores.get) 
+        # else:
+        #     #species_class[read_id] = int(list(set(species_taxids))[0])
+        #     species_class[read_id] = list(set(species_taxids))[0]
+
+
+        # if len(set(species_taxids)) > 1:
+        #     c_problematic.append(read_id)
+        #     species_class[read_id] = max(set(species_taxids), key=species_taxids.count)
+        # else:
+        #     #species_class[read_id] = int(list(set(species_taxids))[0])
+        #     species_class[read_id] = list(set(species_taxids))[0]
+
+    
     return species_class
 
 
@@ -111,7 +158,7 @@ def mapping_output(mapping_class_path, predictions_mapping):
 
     logging.info("Mapping classification written in the file.")
 
-def calculate_mapping_class(paf_path, mapping_class_path=None, beta=2):
+def calculate_mapping_class(paf_path, species_strain_info, mapping_class_path=None, beta=2):
     logging.info("Mapping information extraction.")
 
     predictions_mapping = {}
@@ -124,6 +171,7 @@ def calculate_mapping_class(paf_path, mapping_class_path=None, beta=2):
     genomes_names = {}
     genomes_id = 0
     genomes_list = []
+    species_count = {}
 
     with open(paf_path, "r") as f:
         line = f.readline()
@@ -136,10 +184,18 @@ def calculate_mapping_class(paf_path, mapping_class_path=None, beta=2):
             length_t = int(parts[8].strip()) - int(parts[7].strip())
 
             length = max(length_t, length_q)
-            nm = int(parts[9].strip().split(':')[-1])
+            #nm = int(parts[9].strip().split(':')[-1])
+            nm = int(parts[9].strip())
             value_cig = float(nm) / float(length)
 
             ref_prediction = parts[5].strip()
+            taxid = ref_prediction.split('|')[1]
+            species_taxid = species_strain_info[taxid]
+
+            if species_taxid in species_count:
+                species_count[species_taxid] += 1
+            else:
+                species_count[species_taxid] = 1
 
             if ref_prediction not in genomes_list:
                 genomes[genomes_id] = ref_prediction
@@ -151,7 +207,7 @@ def calculate_mapping_class(paf_path, mapping_class_path=None, beta=2):
             if read_id in predictions_mapping_vcg:
 
                 if ref_prediction in predictions_mapping_vcg[read_id]:
-                    if predictions_mapping_vcg[read_id][ref_prediction] > float(value_cig):
+                    if predictions_mapping_vcg[read_id][ref_prediction] < float(value_cig):
                         predictions_mapping_vcg[read_id][ref_prediction] = float(value_cig)
                     predictions_mapping_vcg_count[read_id][ref_prediction] += 1
                 else:
@@ -197,7 +253,7 @@ def calculate_mapping_class(paf_path, mapping_class_path=None, beta=2):
     if mapping_class_path is not None:
         mapping_output(mapping_class_path, predictions_mapping)
 
-    return U, NU, genomes
+    return U, NU, genomes, species_count
 
 
 def pathoscope_redistribution(NU, genomes):
@@ -252,9 +308,10 @@ def run(args):
         clustering = False
 
 
-    U, NU, genomes = calculate_mapping_class(args.paf_path, mapping_class_path=None, beta=0.5)
+    species_strain_info = load_dict_from_json(args.strain_species_info)
+    U, NU, genomes, species_count = calculate_mapping_class(args.paf_path, species_strain_info, mapping_class_path=None, beta=0.5)
 
-    species_class = species_identification(U, NU, genomes, args.strain_species_info)
+    species_class = species_identification(U, NU, genomes, species_count, args.strain_species_info)
     U_species, NU_species = species_split(U, NU, species_class, genomes, args.strain_species_info)
 
 
@@ -278,6 +335,7 @@ def run(args):
         
 
     for s in species:
+
         NU_result = pathoscope_redistribution(NU_species[s], genomes)
         ambigous_species[s] = 0 
 
@@ -300,6 +358,7 @@ def run(args):
             genome_list = [genomes[i] for i in p]
                 
             if len(genome_list) == 1:
+
                 genome = genome_list[0]
                 f_read_clas.write(read_id + ' : ' + str(genome) + '\n')    
                 ref_count[genome] += 1
@@ -309,6 +368,7 @@ def run(args):
                 genome_read_dict[genome] = temp
 
             else:
+
                 for r in genome_list:
                     ambigous_refs_count[r] += 1
                     t = ambigous_refs_reads[r]
@@ -369,7 +429,7 @@ def run(args):
             w = [i for i, x in enumerate(results) if x == max(results)]
             p = [value_list[0][i] for i in w]
             genome_list = [genomes[i] for i in p]
-
+            
             if len(genome_list) > 1:
                 m = 0
                 mr = ''
