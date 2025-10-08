@@ -86,8 +86,6 @@ def get_reads_lens(reads_file):
                 read_id = line.strip().split()[0][1:]
                 rlen = len(gz_f.readline().strip())
                 reads_lens[read_id] = rlen
-                gz_f.readline()
-                gz_f.readline()
                 line = gz_f.readline()
     return reads_lens
 
