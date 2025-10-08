@@ -117,58 +117,93 @@ def output_abundances(ref_count, read_class, ref_lens, reads_lens, clusters, rep
     f_rc = open(rc_abundances_file, "w")
     ref_abud = {}
     for_print = []
+    for_print_abund = []
+    abund = False
+
+    if len(ref_lens) > 0 and len(reads_lens) > 0:
+        abund = True
+        f_a = open(abundances_file, "w")
+        for ref, count in ref_count.items(): 
+            ref_reads = [key for key, value in read_class.items() if value == ref]
+
+            sum_reads_len = sum([reads_lens[r] for r in ref_reads])
+            abud = sum_reads_len / ref_lens[ref]
+            ref_abud[ref] = abud
+        
 
     if len(clusters.keys()) > 0:
-
 
         for ref, count in ref_count.items():
             if ref in clusters_ids: 
                 cluster_id = clusters_ids[ref]
                 cluster = clusters[cluster_id]
                 rep_found = False
+                if abund:
+                    ref_abund_v = ref_abud[ref]
                 if len(cluster) == 1:
                     #f_rc.write(f"{ref} : {count}\n")
                     for_print.append((ref,count,0))
+                    if abund:
+                        for_print_abund.append((ref,ref_abund_v,0))
                 else:
                     represetative = represetatives[cluster_id]
+                    ref_abund_v = 0
                     count_all = 0
                     for r in cluster:
                         if r in ref_count:
                             count_all += ref_count[r]
+                        if abund and r in ref_abud:
+                            ref_abund_v += ref_abud[r]
                     for_print.append((represetative,count_all,1))
+                    if abund:
+                        for_print_abund.append((represetative,ref_abund_v,1))
 
             else:
                 #f_rc.write(f"{ref} : {count}\n")
                 for_print.append((ref,count,0))
+                if abund:
+                    ref_abund_v = ref_abud[ref]
+                    for_print_abund.append((ref,ref_abund_v,0))
+
 
         for_print = list(set(for_print))
         for_print = sorted(for_print, key=lambda x: x[1], reverse=True)
+        if abund:
+            for_print_abund = list(set(for_print_abund))
+            for_print_abund = sorted(for_print_abund, key=lambda x: x[1], reverse=True)
+            
         for p in for_print:
             if p[2] == 0:
                 f_rc.write(f"{p[0]} : {p[1]}\n")
             else:
                 f_rc.write(f"{p[0]} - with cluster : {p[1]}\n")
+        if abund:
+            for p in for_print_abund:
+                if p[2] == 0:
+                    f_a.write(f"{p[0]} : {p[1]}\n")
+                else:
+                    f_a.write(f"{p[0]} - with cluster : {p[1]}\n")
+            f_a.close()
     else:
         for ref, count in ref_count.items():
             f_rc.write(f"{ref} : {count}\n")
             if ref not in ref_lens:
                 continue
-            if len(reads_lens) > 0:
-                ref_reads = [key for key, value in read_class.items() if value == ref]
-
-                sum_reads_len = sum([reads_lens[r] for r in ref_reads])
-                abud = sum_reads_len / ref_lens[ref]
-                ref_abud[ref] = abud
-
+        if abund:
+            for ref, abud in ref_abud.items():
+                f_a.write(f"{ref} : {abud}\n")
+    
+    if abund:
+        f_a.close()
     f_rc.close()
 
-    if  len(reads_lens) > 0:
-        f_a = open(abundances_file, "w")
+    # if  len(reads_lens) > 0:
+    #     f_a = open(abundances_file, "w")
 
-        ref_abud_s = dict(sorted(ref_abud.items(), key=lambda item: item[1], reverse=True))
-        for ref, abud in ref_abud_s.items():
-            f_a.write(f"{ref} : {abud}\n")
-        f_a.close()
+    #     ref_abud_s = dict(sorted(ref_abud.items(), key=lambda item: item[1], reverse=True))
+    #     for ref, abud in ref_abud_s.items():
+    #         f_a.write(f"{ref} : {abud}\n")
+    #     f_a.close()
 
 def get_clusters(clusters_dir):
     f = open(clusters_dir+"/clusters.txt", "r")
