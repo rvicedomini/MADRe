@@ -119,6 +119,7 @@ Information on how to run specific MADRe steps find under the section [Run speci
 
 ## Build database
 
+### Recommended database (kraken2 built database)
 Recommend database is the kraken2 built bacteria database following next steps:
 ```
 kraken2-build --download-taxonomy --db $DBNAME
@@ -127,6 +128,21 @@ kraken2-build --build --db $DBNAME
 ```
 
 Detailed instructions that are including the one listed here can be found at [kraken2 github page](https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown).
+
+### GTDB database
+
+For using GTDB database, first download the latest GTDB database version and its associated metadata from https://data.gtdb.aau.ecogenomic.org:
+```
+wget https://data.gtdb.aau.ecogenomic.org/releases/latest/genomic_files_reps/gtdb_genomes_reps.tar.gz
+wget https://data.gtdb.aau.ecogenomic.org/releases/latest/bac120_metadata.tsv.gz
+gunzip bac120_metadata.tsv.gz
+```
+Then run script database/gtdb_to_madre.sh:
+``
+./gtdb_to_madre.sh --tar gtdb_genomes_reps.tar.gz --meta bac120_metadata.tsv --out MADRe_reference_database
+``
+
+### Build your own database
 
 If you want to use your database it is important to have taxonomy information for the references included in the database. 
 
@@ -138,7 +154,7 @@ References in the database should have headers in this way:
 
 ```../database/taxids_species.json``` file contains information on species taxid for every strain taxid obtained from NCBI taxonomy (downloaded December 2024.). 
 
-For building new taxids index from newer taxonomy file or for different taxonomic levels you can use ```database/build_json_taxids.py```.
+MADRe for species-level classification step uses taxids index. For building new taxids index from newer taxonomy or for different taxonomic levels you will need taxonomy files (can be downloaded here https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/) and you can use ```database/build_json_taxids.py``` script.
 
 ## Run specific steps
 
