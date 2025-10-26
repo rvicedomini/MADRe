@@ -8,6 +8,9 @@ import DatabaseReduction
 import ReadClassification
 import CalculateAbundances
 
+MIN_CONTIG_LEN = 1000
+MAX_COLLAPSED_STRAINS_OVERHEAD = 2
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -28,12 +31,17 @@ def run_or_skip(cmd, target_file, force=False):
 def main():
     parser = argparse.ArgumentParser(description="MADRe")
 
+    parser.add_argument("--version", action="version", version="MADRe v.0.0.5")
     parser.add_argument("--out-folder", type=str, required=True, help="Path to the output folder.")
     parser.add_argument("--reads", type=str, required=True, help="Path to the reads file (fastq/fq can be gzipped).")
-    parser.add_argument("--reads_flag", type=str, default='ont', choices=['pacbio', 'hifi', 'ont'], help="Reads technology.")
+    parser.add_argument("--reads_flag", type=str, default='ont', choices=['pacbio', 'hifi', 'ont'], help="Reads technology. (default=ont)")
     parser.add_argument("--threads", type=int, default=32, help="Number of threads (default=32).")
     parser.add_argument("-F", "--force", action="store_true", help="Force rerun all steps.")
-    parser.add_argument("--config", type=str, default="config.ini", help="Path to the configuration file.")
+    parser.add_argument("--config", type=str, default="config.ini", help="Path to the configuration file. (default=./config.ini)")
+    parser.add_argument("--strictness", type=str, default="very-strict", choices=["less-strict", "strict", "very-strict"], help="Database reduction strictness level. (default=very-strict)")
+    parser.add_argument("--collapsed_strains_overhead", type=int, default=MAX_COLLAPSED_STRAINS_OVERHEAD, help="Overhead for collapsed strains during database reduction. (default=" + str(MAX_COLLAPSED_STRAINS_OVERHEAD) + ")")
+    parser.add_argument("--min_contig_len", type=int, default=MIN_CONTIG_LEN, help="Minimum contig length for database reduction. (default=" + str(MIN_CONTIG_LEN) + ")")
+    parser.add_argument("--use-myloasm", type=bool, default=False, help="Use Myloasm assembler tool instead of metaFlye/metaMDBG. (default=False)")
 
     args = parser.parse_args()
 
@@ -48,6 +56,9 @@ def main():
     PATH_MINIMAP = config["PATHS"]["minimap"]
     PATH_HAIRSPLITTER = config["PATHS"]["hairsplitter"]
 
+    if args.use_myloasm:
+        PATH_MYLOASM = config["PATHS"]["myloasm"]
+
     PREDEFINED_DB = config["DATABASE"]["predefined_db"]
     PREDEFINED_DB_JSON = Path(__file__).resolve().parent / config["DATABASE"]["strain_species_json"]
 
@@ -58,6 +69,9 @@ def main():
     logging.info(f"Strain-Species JSON: {PREDEFINED_DB_JSON}")
     logging.info(f"Threads: {args.threads}")
 
+    if args.use_myloasm:
+        logging.info(f"Assembly step uses Myloasm.")
+
     if not os.path.exists(args.out_folder):
         logging.info(f"Creating output folder: {args.out_folder}")
         os.makedirs(args.out_folder)
@@ -65,7 +79,7 @@ def main():
     reads_tech_flye = {'pacbio':'--pacbio-raw', 'hifi':'--pacbio-hifi', 'ont':'--nano-raw'}
     reads_tech_minimap = {'pacbio':'-cx map-pb', 'hifi':'-cx map-hifi', 'ont':'-cx map-ont'}
 
-    if args.reads_flag == 'ont':
+    if args.reads_flag == 'ont' and not args.use_myloasm:
         assembly_out_dir = os.path.join(args.out_folder, "metaflye")
         try:
             logging.info("Running MetaFlye...")
@@ -74,7 +88,7 @@ def main():
         except Exception as e:
             logging.error(f"MetaFlye error: {e}")
             exit()
-    else:
+    elif args.reads_flag == 'hifi' and not args.use_myloasm:
         assembly_out_dir = os.path.join(args.out_folder, "metaMDBG")
         try:
             logging.info("Running metaMDBG...")
@@ -82,6 +96,26 @@ def main():
             run_or_skip(command, f"{assembly_out_dir}/assembly.fasta", args.force)
         except Exception as e:
             logging.error(f"metaMDBG error: {e}")
+            exit()
+    elif args.reads_flag == 'ont' and args.use_myloasm:
+        assembly_out_dir = os.path.join(args.out_folder, "myloasm_ont")
+        print(assembly_out_dir)
+        print(PATH_MYLOASM)
+        try:
+            logging.info("Running myloasm with ONT data...")
+            command = f"{PATH_MYLOASM} --output-dir {assembly_out_dir} --threads {args.threads} {args.reads} 2> {args.out_folder}/myloasm.log && cat {assembly_out_dir}/alternate_assemblies/*.fasta {assembly_out_dir}/assembly_primary.fa > {assembly_out_dir}/assembly.fasta"
+            run_or_skip(command, f"{assembly_out_dir}/assembly.fasta", args.force)
+        except Exception as e:
+            logging.error(f"myloasm error: {e}")
+            exit()
+    elif args.reads_flag == 'hifi' and args.use_myloasm:
+        assembly_out_dir = os.path.join(args.out_folder, "myloasm_hifi")
+        try:
+            logging.info("Running myloasm with HiFi data...")
+            command = f"{PATH_MYLOASM} --output-dir {assembly_out_dir} --threads {args.threads} --hifi {args.reads} 2> {args.out_folder}/myloasm.log && cat {assembly_out_dir}/alternate_assemblies/*.fasta {assembly_out_dir}/assembly_primary.fa > {assembly_out_dir}/assembly.fasta"
+            run_or_skip(command, f"{assembly_out_dir}/assembly.fasta", args.force)
+        except Exception as e:
+            logging.error(f"myloasm error: {e}")
             exit()
 
     try:
@@ -124,7 +158,8 @@ def main():
         mapping_reduced_db=None,  
         threads=args.threads,
         strictness="very-strict",
-        min_contig_len=1000)
+        min_contig_len=1000,
+        collapsed_strains_overhead=2)
         DatabaseReduction.run(dr_args)
     except Exception as e:
         logging.error(f"DatabaseReduction error: {e}")
@@ -156,8 +191,8 @@ def main():
             db=f"{args.out_folder}/reduced_db.fa",
             reads=args.reads,
             read_class=f"{args.out_folder}/read_classification.out",
-            rc_abudances_out=f"{args.out_folder}/rc_abundances.out",
-            abudances_out=f"{args.out_folder}/abundances.out",
+            rc_abundances_out=f"{args.out_folder}/rc_abundances.out",
+            abundances_out=f"{args.out_folder}/abundances.out",
             clusters="")
         CalculateAbundances.run(ca_args)
     except Exception as e:

@@ -45,7 +45,6 @@ def species_split(U, NU, species_class, genomes, SS_info_json):
         s = species_class[read_id]
         new_value_list = [[], [], [], 0]
         for i, ind in enumerate(value_list[0]):
-            #s_v = int(SS_info[genomes[ind].split('|')[1]])
             s_v = SS_info[genomes[ind].split('|')[1]]
             if s_v == s:
                 tmp = new_value_list[0]
@@ -113,35 +112,6 @@ def species_identification(U, NU, genomes, species_count, SS_info_json):
 
         species_class[read_id] = SS_info[a_t[chosen]]
 
-        # for t in taxids_genomes:
-        #     t_t = t.split('|')[1]
-        #     t_a = t.split('|')[2]
-        #     if t_a in list(most_common_strains_vals.keys()):
-        #         species_taxids.append(SS_info[t_t])
-        # if len(species_taxids) > 2:
-        #     print(species_taxids)
-        ## NORMALIZATION APPROACH
-        # if len(set(species_taxids)) > 1:
-        #     c_problematic.append(read_id)
-        #     #species_class[read_id] = max(set(species_taxids), key=species_taxids.count)
-        #     norm_scores = {}
-        #     for s in set(species_taxids):
-        #         raw_count = species_taxids.count(s)  
-        #         db_count = species_count[s]
-        #         norm_scores[s] = raw_count / (db_count ** alpha)
-        #     species_class[read_id] = max(norm_scores, key=norm_scores.get) 
-        # else:
-        #     #species_class[read_id] = int(list(set(species_taxids))[0])
-        #     species_class[read_id] = list(set(species_taxids))[0]
-
-
-        # if len(set(species_taxids)) > 1:
-        #     c_problematic.append(read_id)
-        #     species_class[read_id] = max(set(species_taxids), key=species_taxids.count)
-        # else:
-        #     #species_class[read_id] = int(list(set(species_taxids))[0])
-        #     species_class[read_id] = list(set(species_taxids))[0]
-
     
     return species_class
 
@@ -182,11 +152,14 @@ def calculate_mapping_class(paf_path, species_strain_info, mapping_class_path=No
         
             length_q = int(parts[3].strip()) - int(parts[2].strip())
             length_t = int(parts[8].strip()) - int(parts[7].strip())
+            length_a = int(parts[10].strip())
 
             length = max(length_t, length_q)
             #nm = int(parts[9].strip().split(':')[-1])
             nm = int(parts[9].strip())
             value_cig = float(nm) / float(length)
+            # print(value_cig)
+            # value_cig = float(nm) - 4*(length_a-nm)
 
             ref_prediction = parts[5].strip()
             taxid = ref_prediction.split('|')[1]
@@ -218,7 +191,7 @@ def calculate_mapping_class(paf_path, species_strain_info, mapping_class_path=No
                 predictions_mapping_vcg[read_id] = {ref_prediction:float(value_cig)}
                 predictions_mapping_vcg_count[read_id] = {ref_prediction:1}
 
-
+            # print(predictions_mapping_vcg)
             line = f.readline()
 
     for read_id, candidates in predictions_mapping_vcg.items():

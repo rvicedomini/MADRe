@@ -86,13 +86,14 @@ def get_reads_lens(reads_file):
                 read_id = line.strip().split()[0][1:]
                 rlen = len(gz_f.readline().strip())
                 reads_lens[read_id] = rlen
-                gz_f.readline()
-                gz_f.readline()
                 line = gz_f.readline()
     return reads_lens
 
 def get_refs_lens(reduced_db):
-    f = open(reduced_db, "r")
+    if reduced_db.endswith('gz'):
+        f = gzip.open(reduced_db, "rt")
+    else:
+        f = open(reduced_db, "r")
 
     refs_lens = {}
     rlen = 0
@@ -107,6 +108,7 @@ def get_refs_lens(reduced_db):
         else:  
             rlen += len(line.strip())
         line = f.readline()
+
 
     refs_lens[ref] = rlen
 
@@ -239,15 +241,15 @@ def run(args):
     # logging.info(f"Reduced database file path: {args.reduced_db}")
     logging.info(f"Reads file path: {args.reads}")
     logging.info(f"Read classification file path: {args.read_class}")
-    logging.info(f"Read count abundances file path: {args.rc_abudances_out}") 
-    if args.abudances_out != "": 
-        logging.info(f"Relative abundances file path: {args.abudances_out}") #napraviti da je ovo opcionalno
+    logging.info(f"Read count abundances file path: {args.rc_abundances_out}") 
+    if args.abundances_out != "": 
+        logging.info(f"Relative abundances file path: {args.abundances_out}") #napraviti da je ovo opcionalno
         if args.db is None:
             abundances_out = ""
             logging.warning("Database path missing. Skipping relative abundance estimation...")
         else:
             logging.info(f"Database file path: {args.db}")
-            abundances_out = args.abudances_out
+            abundances_out = args.abundances_out
     else:
         abundances_out = "" 
     if args.clusters != "":
@@ -271,7 +273,7 @@ def run(args):
         clusters_ids = {}
         clusters = {}
         represetatives = []
-    output_abundances(ref_count, reads_class, refs_lens, reads_lens, clusters, represetatives, clusters_ids, args.rc_abudances_out, abundances_out)
+    output_abundances(ref_count, reads_class, refs_lens, reads_lens, clusters, represetatives, clusters_ids, args.rc_abundances_out, abundances_out)
 
 
 
@@ -296,12 +298,12 @@ def main():
     )
 
     parser.add_argument(
-        "--rc_abudances_out", type=str, default="rc_abundances.out",
+        "--rc_abundances_out", type=str, default="rc_abundances.out",
         help="Path to the output file with read count. (default=rc_abundances.out)"
     )
 
     parser.add_argument(
-        "--abudances_out", type=str, default="",
+        "--abundances_out", type=str, default="",
         help="Path to the output file with estimated abundances. If path is not given this file is not going to be generated. WARNING: In case of large sample and large database that can be computationally exhaustive job."
     )
 

@@ -7,6 +7,7 @@ from pathlib import Path
 
 CLEAN_THRESHOLD = {'less-strict':0.9,'strict':0.99, 'very-strict':0.999} 
 MIN_CONTIG_LEN = 1000
+MAX_COLLAPSED_STRAINS_OVERHEAD = 2
 
 logging.basicConfig(
     level=logging.INFO,  # Set log level to INFO
@@ -144,12 +145,12 @@ def calculate_mapping_class(paf_path, number_of_clusters, mapping_class_path=Non
 
     return U, NU, genomes
 
-def clear_NU(U, NU, number_of_clusters, genomes_ids, strictness):
+def clear_NU(U, NU, number_of_clusters, genomes_ids, strictness, collapsed_strains_overhead):
     NU_cleaned = {}
     for contig, nu_values in NU.items():
         nu_value_0_1 = zip(nu_values[0],nu_values[1])
         m = max(nu_values[1])
-        max_num_clusters = max(number_of_clusters[contig]+2, 1)
+        max_num_clusters = max(number_of_clusters[contig] + collapsed_strains_overhead, 1)
 
         nu_value_0_1 = sorted(nu_value_0_1, key=lambda x: x[1], reverse=True)[:max_num_clusters]
         nu_value_0_1_new = []
@@ -231,13 +232,10 @@ def EM(U, NU, genomes, max_iter, em_epsilon):
         # M step    
         pisum = [thetasum[k]+pisum_beg[k] for k in range(len(thetasum))]   
 
-        #pi = [(1.*k+pip)/(len(U)+len(NU)+pip*len(pisum)) for k in pisum]
         pi = [(1.*k)/(len(U)+len(NU)+len(pisum)) for k in pisum]
 
         if (i == 0):
             init_pi = pi
-
-        theta = thetasum
 
         cutoff = 0.0
 
@@ -250,7 +248,7 @@ def EM(U, NU, genomes, max_iter, em_epsilon):
 
     logging.info(f"Number of performed iterations: {i}")
 
-    return init_pi, pi, theta, NU 
+    return init_pi, pi, thetasum, NU 
 
 def load_dict_from_json(filename):
     with open(filename, 'r') as file:
@@ -355,12 +353,13 @@ def run(args):
         logging.info(f"Reduced database file path: {args.reduced_db}")
     logging.info(f"Strictness: {args.strictness}")
     logging.info(f"Min contig length: {args.min_contig_len}")
+    logging.info(f"Max collapsed strains overhead: {args.collapsed_strains_overhead}")
     logging.info(f"Number of threads used: {args.threads}")
 
     number_of_clusters = get_number_of_clusters(args.num_collapsed_strains)
     U, NU, genomes_ids = calculate_mapping_class(args.paf_path, number_of_clusters, args.mapping_class, args.mapping_reduced_db)
 
-    U, NU = clear_NU(U, NU, number_of_clusters, genomes_ids, args.strictness)
+    U, NU = clear_NU(U, NU, number_of_clusters, genomes_ids, args.strictness, args.collapsed_strains_overhead)
 
     init_pi, pi, theta, NU = EM(U, NU, list(genomes_ids.values()), 25, 0.0001)
 
@@ -425,12 +424,17 @@ def main():
 
     parser.add_argument(
         "--strictness", type=str, default='very-strict', choices=['less-strict', 'strict', 'very-strict'],
-        help="strictness of database reduction - choices: less-strict, strict, very-strict - default: very-strict"
+        help="Strictness of database reduction - choices: less-strict, strict, very-strict - default: very-strict"
     )
     
     parser.add_argument(
         "--min_contig_len", type=int, default=MIN_CONTIG_LEN,
         help="Filter out contigs shorter than min_contig_len (default=1000)."
+    )
+
+    parser.add_argument(
+        "--collapsed_strains_overhead", type=int, default=MAX_COLLAPSED_STRAINS_OVERHEAD,
+        help="Maximum overhead for number of collapsed strains per contig estimated by HairSplitter (default=2)."
     )
 
     args = parser.parse_args()
