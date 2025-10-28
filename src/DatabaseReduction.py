@@ -288,11 +288,17 @@ def get_reduced_list(U, NU, reduced_list, genomes_ids, SS_info_json, number_of_c
         for a,b in gt:
             
             taxid = a.split('|')[1]
+            if taxid not in SS_info:
+                logging.warning(f"Taxid {taxid} not found in strain-species info JSON. Skipping mapping for contig {c} for this taxid.")
+                continue
             species_t = SS_info[taxid]
             if species_t in c_taxids:
                 c_taxids[species_t] += b
             else:
                 c_taxids[species_t] = b
+        if c_taxids == {}:
+            logging.warning(f"No valid taxids found for contig {c}. Skipping.")
+            continue
         species = max(c_taxids, key=c_taxids.get)
         c_reduced = []
         for a,b in gt:
