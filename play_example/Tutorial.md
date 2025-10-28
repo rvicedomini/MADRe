@@ -285,6 +285,7 @@ Since *“there is no free lunch,”* different assembly approaches can help add
 
 This parameter can be set when running `madre`, `database-reduction`, or `read-classification`.  
 It specifies the path to a file such as `MADRe/database/taxids_species.json`, which contains information mapping each strain, subspecies, and species taxID to its corresponding species-level taxID.  
+If database contains taxID that is not part of `MADRe/database/taxids_species.json` file, MADRe pipeline will continue but it will skip mappings containing that organism which can impact classification results.  
 The default JSON file contains taxonomy information from December 2024.  
 To update to a newer taxonomy version, a new `taxids_species.json` file can be generated using the script `MADRe/database/metagenomika_eval/build_taxids_index.py`.
 

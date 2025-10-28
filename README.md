@@ -1,6 +1,30 @@
 # MADRe
 Strain-level metagenomic classification with Metagenome Assembly driven Database Reduction approach
 
+![MADRe logo](MADRe_logo-modified.png)
+
+## Why MADRe?
+
+**MADRe (Metagenomic Assembly-Driven Database Reduction)** is designed for metagenomic analyses where there is **no prior knowledge about the sample composition** and the starting database is **large and diverse**, containing thousands of species and strains.
+
+In such exploratory settings, traditional read-based classifiers either require extensive computational resources or struggle to resolve closely related genomes.  
+MADRe overcomes these limitations by introducing an **assembly-guided database reduction strategy** that automatically identifies and retains only the genomes supported by the data, thereby enabling a more computationally efficient mapping-based classification process.  
+This dramatically reduces both **runtime and disk usage** compared to traditional mapping-based classifiers, while improving **classification precision and accuracy** relative to k-mer-based metagenomic classification methods.
+
+### When to use MADRe
+Use MADRe when working with:
+- Complex metagenomic datasets where the taxonomic composition is unknown.
+- Very large reference databases containing multiple strains per species.
+- Long-read sequencing data (ONT, PacBio HiFi) where assembly is feasible.
+
+### Why MADRe is different
+- **Efficient exploration of large databases** – Instead of mapping every read to every genome, MADRe narrows the search space through an assembly-driven reduction step, lowering computational load without significantly sacrificing accuracy. 
+- **Resource-aware design** – For smaller datasets (~1.7M ONT reads), MADRe requires up to ~2.5× less RAM and ~5.2× shorter runtime, while for larger datasets (~5M ONT reads) it achieves up to ~3× faster execution and ~10× lower disk usage than large-scale mapping-based approaches, all while maintaining higher interpretability and accuracy.
+- **Improved precision over k-mer based tools** – By leveraging alignment-based evidence from assembled contigs, MADRe avoids many of the false-positive assignments typical for k-mer classifiers.  
+- **Modular and transparent** – Each step (*Database Reduction*, *Read Classification*, *Calculate Abundances*) can be executed independently, producing interpretable outputs suitable for downstream analyses.
+
+MADRe is particularly useful as a **first-pass classification tool** for large, uncharacterized metagenomic datasets, providing a computationally efficient and biologically meaningful starting point for deeper strain-level analysis.
+
 ## Instalation
 
 ### OPTION 1 : Conda
@@ -155,6 +179,10 @@ References in the database should have headers in this way:
 ```../database/taxids_species.json``` file contains information on species taxid for every strain taxid obtained from NCBI taxonomy (downloaded December 2024.). 
 
 MADRe for species-level classification step uses taxids index. For building new taxids index from newer taxonomy or for different taxonomic levels you will need taxonomy files (can be downloaded here https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/) and you can use ```database/build_json_taxids.py``` script.
+
+## How to run MADRe?
+
+This README contains basic information on how to run MADRe pipeline. However, **for more detailed tuorial check [play_example/Tutorial.md](https://github.com/lbcb-sci/MADRe) file**.
 
 ## Run specific steps
 
