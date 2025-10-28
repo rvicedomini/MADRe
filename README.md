@@ -1,7 +1,9 @@
 # MADRe
 Strain-level metagenomic classification with Metagenome Assembly driven Database Reduction approach
 
-![MADRe logo](MADRe_logo-modified.png)
+<p align="center">
+  <img src="MADRe_logo-modified.png" alt="MADRe logo" width="150"/>
+</p>
 
 ## Why MADRe?
 
