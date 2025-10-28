@@ -23,7 +23,7 @@ Use MADRe when working with:
 
 ### Why MADRe is different?
 - **Efficient exploration of large databases** – Instead of mapping every read to every genome, MADRe narrows the search space through an assembly-driven reduction step, lowering computational load without significantly sacrificing accuracy. 
-- **Resource-aware design** – For smaller datasets (~1.7M ONT reads), MADRe requires up to ~2.5× less RAM and ~5.2× shorter runtime, while for larger datasets (~5M ONT reads) it achieves up to ~3× faster execution and ~10× lower disk usage than large-scale mapping-based approaches, all while maintaining higher interpretability and accuracy.
+- **Resource-aware design** – For smaller datasets (~1.7 M ONT reads), MADRe requires up to ~2.5× less RAM and achieves ~5.2× shorter runtime, while for larger datasets (~5 M ONT reads) it runs up to ~3× faster and uses ~10× less disk space, all while maintaining higher interpretability and accuracy compared with other mapping-based, strain-aware classifiers.
 - **Improved precision over k-mer based tools** – By leveraging alignment-based evidence from assembled contigs, MADRe avoids many of the false-positive assignments typical for k-mer classifiers.  
 - **Modular and transparent** – Each step (*Database Reduction*, *Read Classification*, *Calculate Abundances*) can be executed independently, producing interpretable outputs suitable for downstream analyses.
 
