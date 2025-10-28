@@ -1,7 +1,7 @@
 # MADRe
 
 <p align="center">
-  <img src="MADRe_logo-modified.png" alt="MADRe logo" width="150"/>
+  <img src="imgs/MADRe_logo-modified.png" alt="MADRe logo" width="150"/>
 </p>
 
 
@@ -15,13 +15,13 @@ In such exploratory settings, traditional read-based classifiers either require 
 MADRe overcomes these limitations by introducing an **assembly-guided database reduction strategy** that automatically identifies and retains only the genomes supported by the data, thereby enabling a more computationally efficient mapping-based classification process.  
 This dramatically reduces both **runtime and disk usage** compared to traditional mapping-based classifiers, while improving **classification precision and accuracy** relative to k-mer-based metagenomic classification methods.
 
-### When to use MADRe
+### When to use MADRe?
 Use MADRe when working with:
 - Complex metagenomic datasets where the taxonomic composition is unknown.
 - Very large reference databases containing multiple strains per species.
 - Long-read sequencing data (ONT, PacBio HiFi) where assembly is feasible.
 
-### Why MADRe is different
+### Why MADRe is different?
 - **Efficient exploration of large databases** – Instead of mapping every read to every genome, MADRe narrows the search space through an assembly-driven reduction step, lowering computational load without significantly sacrificing accuracy. 
 - **Resource-aware design** – For smaller datasets (~1.7M ONT reads), MADRe requires up to ~2.5× less RAM and ~5.2× shorter runtime, while for larger datasets (~5M ONT reads) it achieves up to ~3× faster execution and ~10× lower disk usage than large-scale mapping-based approaches, all while maintaining higher interpretability and accuracy.
 - **Improved precision over k-mer based tools** – By leveraging alignment-based evidence from assembled contigs, MADRe avoids many of the false-positive assignments typical for k-mer classifiers.  
@@ -85,6 +85,7 @@ metaMDBG = metaMDBG
 minimap = minimap2
 hairsplitter = hairsplitter.py
 seqkit = seqkit
+myloasm = myloasm #optional
 
 [DATABASE]
 predefined_db = /data/database.fna
@@ -108,6 +109,7 @@ For running from source you need to install following dependecies:
 - hairsplitter
 - seqkit
 - kraken2
+- myloasm (optional)
 
 Dependencies can be installed through conda:
 ```
@@ -123,6 +125,7 @@ metaMDBG = /path/to/metaMDBG
 minimap = /path/to/minimap2
 hairsplitter = /path/to/hairsplitter.py
 seqkit = /path/to/seqkit
+myloasm = /path/to/myloasm #optional
 
 [DATABASE]
 predefined_db = /path/to/database.fna
