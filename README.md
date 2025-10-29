@@ -23,7 +23,7 @@ Use MADRe when working with:
 
 ### Why MADRe is different?
 - **Efficient exploration of large databases** – Instead of mapping every read to every genome, MADRe narrows the search space through an assembly-driven reduction step, lowering computational load without significantly sacrificing accuracy. 
-- **Resource-aware design** – For smaller datasets (~1.7 M ONT reads), MADRe requires up to ~2.5× less RAM and achieves ~5.2× shorter runtime, while for larger datasets (~5 M ONT reads) it runs up to ~3× faster and uses ~10× less disk space, all while maintaining higher interpretability and accuracy compared with other mapping-based, strain-aware classifiers.
+- **Resource-aware design** – For smaller datasets (~1.7 M ONT reads), MADRe requires up to ~2.5× less RAM and achieves ~5.2× shorter runtime, while for larger datasets (~5 M ONT reads) it runs up to ~3× faster and uses ~7.5× less disk space, all while maintaining higher interpretability and accuracy compared with other mapping-based, strain-aware classifiers.
 - **Improved precision over k-mer based tools** – By leveraging alignment-based evidence from assembled contigs, MADRe avoids many of the false-positive assignments typical for k-mer classifiers.  
 - **Modular and transparent** – Each step (*Database Reduction*, *Read Classification*, *Calculate Abundances*) can be executed independently, producing interpretable outputs suitable for downstream analyses.
 
@@ -60,40 +60,7 @@ more information:
 ```
 madre --help
 ```
-
-
-### OPTION 2 : Docker
-
-```
-docker pull jlipovac13/madre:0.0.4
-```
-simple run:
-```
-docker run --rm -v $PWD:/data jlipovac13/madre:0.0.4 madre --reads /data/reads.fastq --config /data/config.ini --out-folder /data/out_folder
-```
-
-more information:
-```
-docker run --rm -v $PWD:/data jlipovac13/madre:0.0.4 madre --help
-```
-
-set up the configuration (config.ini file):
-```                                                               
-[PATHS]
-metaflye = flye
-metaMDBG = metaMDBG
-minimap = minimap2
-hairsplitter = hairsplitter.py
-seqkit = seqkit
-myloasm = myloasm #optional
-
-[DATABASE]
-predefined_db = /data/database.fna
-strain_species_json = /data/taxids_species.json
-```
-NOTE: Ensure that along with input data, database.fna and taxids_species.json are in /data/ folder. Prebuilt version of ```taxids_species.json``` can be found in GitHub database folder. More information about it find under the section [Build database](#build-database).
-
-### OPTION 3: Running from source
+### OPTION 2: Running from source
 
 ```
 git clone https://github.com/lbcb-sci/MADRe
