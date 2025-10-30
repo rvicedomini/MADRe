@@ -135,10 +135,10 @@ wget https://data.gtdb.aau.ecogenomic.org/releases/latest/genomic_files_reps/gtd
 wget https://data.gtdb.aau.ecogenomic.org/releases/latest/bac120_metadata.tsv.gz
 gunzip bac120_metadata.tsv.gz
 ```
-Then run script database/gtdb_to_madre.sh:
-``
+Then run script `database/gtdb_to_madre.sh`:
+```
 ./gtdb_to_madre.sh --tar gtdb_genomes_reps.tar.gz --meta bac120_metadata.tsv --out MADRe_reference_database
-``
+```
 
 ### Build your own database
 
