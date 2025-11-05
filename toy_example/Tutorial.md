@@ -1,6 +1,6 @@
 # How to run MADRe?
 
-We prepared a short tutorial demonstrating how to run MADRe using a small example dataset. The reads (`sim_small.fastq.gz`) can be obtained from the [Zenodo page](https://zenodo.org/records/14845576). The example database, which contains only genomes from species included in the `sim_small` dataset, is available in this repository at `play_example/db.fa.gz`.  
+We prepared a short tutorial demonstrating how to run MADRe using a small example dataset. The reads (`sim_small.fastq.gz`) can be obtained from the [Zenodo page](https://zenodo.org/records/14845576). The example database, which contains only genomes from species included in the `sim_small` dataset, is available in this repository at `toy_example/db.fa.gz`.  
 Download both of these files. This tutorial assumes that MADRe has been installed via Conda (see *Installation – OPTION 1* in main README file).
 
 ## Run the whole MADRe pipeline
@@ -15,7 +15,7 @@ hairsplitter = path_to_hairsplitter.py
 seqkit = path_to_seqkit
 
 [DATABASE]
-predefined_db = MADRe/playexample/db.fa.gz
+predefined_db = MADRe/toy_example/db.fa.gz
 strain_species_json = MADRe/database/taxids_species.json
 ```
 
@@ -50,7 +50,7 @@ optional arguments:
 Once the `config.ini` file is ready, you can run the full pipeline with:
 
 ```
-$ madre --out-folder MADRe_play_example --reads sim_small.fastq.gz --reads_flag ont --threads 32 --config.ini ./config.ini --strictness very-strict --collapsed_strains_overhead 2 --min_contig_len 1000 --use_myloasm False
+$ madre --out-folder MADRe_toy_example --reads sim_small.fastq.gz --reads_flag ont --threads 32 --config.ini ./config.ini --strictness very-strict --collapsed_strains_overhead 2 --min_contig_len 1000 --use_myloasm False
 ```
 
 Detailed information about additional MADRe parameters can be found in the [Additional parameters information](#additional-parameters-information) section.
@@ -80,7 +80,7 @@ Detailed information about additional MADRe parameters can be found in the [Addi
 
 ### NOTE
 
-All output files from this run could be found in ```MADRe/play_example/madre_out```.
+All output files from this run could be found in ```MADRe/toy_example/madre_out```.
 
 The default MADRe pipeline **does not** perform post-classification clustering. To perform clustering, follow the instructions under [Clustering](#clustering).  
 **Please note that this feature is still under development!**
@@ -150,7 +150,7 @@ Additional parameters not used in the command above are explained in the section
 ## Run *Read Classification* step
 
 Just like the *Database Reduction* step, the *Read Classification* step can be run independently. For example, if the user already has prior knowledge about their sample and knows which organisms should be included in the database, they can build a smaller custom database and run only this step.  
-In this tutorial, we will perform this step using the already reduced database available at `MADRe/play_example/madre_out/reduced_db.fa`.
+In this tutorial, we will perform this step using the already reduced database available at `MADRe/toy_example/madre_out/reduced_db.fa`.
 
 For more information about MADRe’s *Read Classification* parameters:
 
@@ -174,7 +174,7 @@ optional arguments:
 To run this step, mappings of reads to the reduced database are required. These can be obtained using `minimap2`:
 
 ```
-$ minimap2 -cx map-ont MADRe/play_example/madre_out/reduced_db.fa sim_small.fastq.gz -t 32 > reads.to_reduced.paf
+$ minimap2 -cx map-ont MADRe/toy_example/madre_out/reduced_db.fa sim_small.fastq.gz -t 32 > reads.to_reduced.paf
 ```
 Once the `reads.to_reduced.paf` file is generated, we can run the *Read Classification* step:
 ```
@@ -236,7 +236,7 @@ Cluster data can be obtained by running the *Read Classification* step as follow
 $ read-classification --paf_path reads.to_reduced.paf --strain_species_info MADRe/database/taxids_species.json --read_class_output read_classification.out --clustering_out clusters 
 ```
 `clusters` is the output directory containing two files: `clusters.txt` and `representatives.txt`.  
-Example outputs can be found in `MADRe/play_example/madre_out/clusters`.  
+Example outputs can be found in `MADRe/toy_example/madre_out/clusters`.  
 
 Each line in `clusters.txt` represents a single cluster — all genome IDs belonging to that cluster are separated by spaces.  
 The file `representatives.txt` contains the representative genomes for each cluster.  
@@ -251,7 +251,7 @@ $ calculate-abundances --reads sim_small.fastq.gz --read_class read_classificati
 ```
 
 After running this command, the output files `rc_abundances.with_clusters.out` and `abundances.with_clusters.out` will contain entries in the format  `genome_ID_with_cluster : abundance`, representing the abundance of each cluster, with the cluster identified by the representative genome listed with that genome ID.  
-Example output files can be found in `MADRe/play_example/madre_out`.
+Example output files can be found in `MADRe/toy_example/madre_out`.
 
 ## Additional parameters information 
 

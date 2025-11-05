@@ -156,7 +156,7 @@ MADRe for species-level classification step uses taxids index. For building new 
 
 ## How to run MADRe?
 
-This README contains basic information on how to run MADRe pipeline. However, **for more detailed tuorial check [play_example/Tutorial.md](https://github.com/lbcb-sci/MADRe) file**.
+This README contains basic information on how to run MADRe pipeline. However, **for more detailed tuorial check [toy_example/Tutorial.md](https://github.com/lbcb-sci/MADRe/blob/main/toy_example/Tutorial.md) file**.
 
 ## Run specific steps
 
